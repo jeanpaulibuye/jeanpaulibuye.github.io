@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Likelemba Pi</title>
+<script src="https://sdk.minepi.com/pi-sdk.js"></script>
+<style>
+:root{--bg:#f6f3fb;--card:#fff;--ink:#241b36;--muted:#6f6585;--main:#6b3fa0;--main2:#f5b82e;--ok:#2e9e5b;--bad:#d64545;--line:#e6dff2}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:var(--main);color:#fff;padding:16px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+header h1{margin:0;font-size:20px}
+header small{opacity:.85}
+.hr{text-align:right;font-size:13px}
+.hr a{color:#fff}
+.lang{background:rgba(255,255,255,.18);color:#fff;border:0;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:4px}
+main{max-width:560px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+h2{margin:0 0 10px;font-size:18px}
+h3{margin:14px 0 8px;font-size:15px}
+label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+input,select{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;font-size:16px;background:#fff}
+button{border:0;border-radius:10px;padding:12px 16px;font-size:15px;font-weight:600;cursor:pointer;background:var(--main);color:#fff}
+button.sec{background:#ece6f6;color:var(--main)}
+button.gold{background:var(--main2);color:#2b2100}
+button.small{padding:8px 12px;font-size:13px}
+button:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:8px;align-items:center}
+.row>*{flex:1}
+.row>button{flex:none}
+.between{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.muted{color:var(--muted);font-size:13px}
+.pill{display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:600}
+.pill.ok{background:#dcf3e5;color:var(--ok)}
+.pill.bad{background:#fbe1e1;color:var(--bad)}
+.pill.cur{background:#fff1cc;color:#8a6200}
+.item{padding:10px 0;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:0}
+.bar{height:10px;background:#ece6f6;border-radius:99px;overflow:hidden;margin:8px 0}
+.bar>div{height:100%;background:var(--ok)}
+.empty{text-align:center;color:var(--muted);padding:24px 8px}
+.notice{background:#fff7e0;border:1px solid #f1dc9b;border-radius:10px;padding:10px;font-size:13px;margin-bottom:14px}
+.back{background:none;color:var(--main);padding:0;margin-bottom:10px}
+footer{text-align:center;padding:8px 16px 28px;font-size:13px}
+footer a{color:var(--main)}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>🪙 Likelemba Pi</h1><small id="tag"></small></div>
+  <div class="hr"><button class="lang" id="langbtn" onclick="toggleLang()"></button><div id="who"></div></div>
+</header>
+<main id="app"></main>
+<footer><a href="privacy.html" id="privlink"></a></footer>
+
+<script>
+// ====== Settings ======
+// Set to true once the Pi payment approval server is in place.
+var PI_PAYMENTS_LIVE = false;
+var KEY = "likelemba_pi_v1";
+
+// ====== Translations ======
+var TR = {
+  en: {
+    tagline: "Digital savings circle",
+    welcome: "Welcome 👋",
+    welcomeText: "Save together with full transparency: everyone contributes, everyone receives in turn.",
+    loginPi: "Sign in with Pi",
+    demoMode: "Or demo mode",
+    yourNick: "Your nickname",
+    nickPh: "e.g. Patrick",
+    continueDemo: "Continue in demo mode",
+    quit: "Sign out",
+    myTontines: "My tontines",
+    newBtn: "+ New",
+    demoNotice: "Demo mode: contributions are recorded in the app, with no real transfer of Pi.",
+    noTontine: "No tontine yet.<br>Create one to get started.",
+    setup: "Getting ready",
+    finished: "Finished",
+    roundOf: "Round {n}/{m}",
+    summary: "{a} π {f} · {n} member(s)",
+    freqWeek: "every week",
+    freqMonth: "every month",
+    back: "← Back",
+    newTitle: "New tontine",
+    groupName: "Group name",
+    groupPh: "e.g. Mukendi Family",
+    amountLbl: "Contribution amount (π)",
+    amountPh: "e.g. 5",
+    frequency: "Frequency",
+    optWeek: "Every week",
+    optMonth: "Every month",
+    create: "Create the tontine",
+    errNameAmount: "Enter a name and a valid amount.",
+    potLine: "{a} π {f} · pot per round: ",
+    share: "📤 Invite / share",
+    members: "Members ({n})",
+    organizer: "(organizer)",
+    remove: "Remove",
+    addMember: "Add a member (Pi username)",
+    userPh: "username",
+    add: "Add",
+    startDraw: "🎲 Draw the order and start",
+    onlyOwnerStart: "Only the organizer can start the tontine.",
+    roundNofM: "Round {n} of {m}",
+    recipient: "🎁 Recipient: {x}",
+    received: "{c}/{m} contributions received",
+    paid: "Paid {d}",
+    pending: "Pending",
+    contribute: "Contribute",
+    payoutBtn: "Pay out {a} π to {x}",
+    ownerValidates: "The organizer confirms the payout once everyone has contributed.",
+    finishedTitle: "🎉 Tontine finished",
+    finishedText: "All members have received the pot.",
+    orderTitle: "Payout order",
+    currentRound: "Current round",
+    got: "Received",
+    history: "History",
+    noHistory: "No payout yet.",
+    histLine: "<b>Round {n}</b> — {x} received {a} π",
+    del: "Delete the tontine",
+    confirmPay: "Demo mode: record {x}'s contribution ({a} π)?",
+    errPay: "Payment error.",
+    errMin2: "At least 2 members are required.",
+    errDup: "This member already exists.",
+    err12: "Maximum 12 members.",
+    confirmStart: "Draw the order at random and start? Members can no longer be changed.",
+    confirmDel: "Delete this tontine?",
+    copied: "Message copied.",
+    copyPrompt: "Copy this message:",
+    piMissing: "Pi Browser not detected. Use demo mode with a nickname.",
+    piFail: "Pi sign-in failed. Use demo mode instead.",
+    shareText: "Join my tontine “{n}” on Likelemba Pi: {a} π {f}, {m} members.",
+    privacy: "Privacy policy"
+  },
+  fr: {
+    tagline: "La tontine numérique",
+    welcome: "Bienvenue 👋",
+    welcomeText: "Épargnez en groupe avec transparence : chacun cotise, chacun reçoit à son tour.",
+    loginPi: "Se connecter avec Pi",
+    demoMode: "Ou mode démo",
+    yourNick: "Votre pseudo",
+    nickPh: "ex : Patrick",
+    continueDemo: "Continuer en démo",
+    quit: "Quitter",
+    myTontines: "Mes tontines",
+    newBtn: "+ Nouvelle",
+    demoNotice: "Mode démo : les cotisations sont enregistrées dans l'application, sans transfert réel de Pi.",
+    noTontine: "Aucune tontine pour l'instant.<br>Créez-en une pour commencer.",
+    setup: "En préparation",
+    finished: "Terminée",
+    roundOf: "Tour {n}/{m}",
+    summary: "{a} π {f} · {n} membre(s)",
+    freqWeek: "chaque semaine",
+    freqMonth: "chaque mois",
+    back: "← Retour",
+    newTitle: "Nouvelle tontine",
+    groupName: "Nom du groupe",
+    groupPh: "ex : Famille Mukendi",
+    amountLbl: "Montant par cotisation (π)",
+    amountPh: "ex : 5",
+    frequency: "Fréquence",
+    optWeek: "Chaque semaine",
+    optMonth: "Chaque mois",
+    create: "Créer la tontine",
+    errNameAmount: "Entrez un nom et un montant valide.",
+    potLine: "{a} π {f} · cagnotte par tour : ",
+    share: "📤 Inviter / partager",
+    members: "Membres ({n})",
+    organizer: "(organisateur)",
+    remove: "Retirer",
+    addMember: "Ajouter un membre (pseudo Pi)",
+    userPh: "pseudo",
+    add: "Ajouter",
+    startDraw: "🎲 Tirer l'ordre et démarrer",
+    onlyOwnerStart: "Seul l'organisateur peut démarrer la tontine.",
+    roundNofM: "Tour {n} sur {m}",
+    recipient: "🎁 Bénéficiaire : {x}",
+    received: "{c}/{m} cotisations reçues",
+    paid: "Payé {d}",
+    pending: "En attente",
+    contribute: "Cotiser",
+    payoutBtn: "Verser {a} π à {x}",
+    ownerValidates: "Le versement est validé par l'organisateur quand tout le monde a cotisé.",
+    finishedTitle: "🎉 Tontine terminée",
+    finishedText: "Tous les membres ont reçu la cagnotte.",
+    orderTitle: "Ordre de passage",
+    currentRound: "Tour en cours",
+    got: "Reçu",
+    history: "Historique",
+    noHistory: "Aucun versement pour le moment.",
+    histLine: "<b>Tour {n}</b> — {x} a reçu {a} π",
+    del: "Supprimer la tontine",
+    confirmPay: "Mode démo : enregistrer la cotisation de {x} ({a} π) ?",
+    errPay: "Erreur de paiement.",
+    errMin2: "Il faut au moins 2 membres.",
+    errDup: "Ce membre existe déjà.",
+    err12: "12 membres maximum.",
+    confirmStart: "Tirer l'ordre au sort et démarrer ? Les membres ne pourront plus changer.",
+    confirmDel: "Supprimer cette tontine ?",
+    copied: "Message copié.",
+    copyPrompt: "Copiez ce message :",
+    piMissing: "Pi Browser non détecté. Utilisez le mode démo avec un pseudo.",
+    piFail: "Connexion Pi impossible. Utilisez le mode démo.",
+    shareText: "Rejoins ma tontine « {n} » sur Likelemba Pi : {a} π {f}, {m} membres.",
+    privacy: "Politique de confidentialité"
+  }
+};
+
+// ====== Data ======
+var state = load();
+function load(){
+  try { var s = JSON.parse(localStorage.getItem(KEY)); if (s && s.tontines) return s; } catch(e){}
+  return { user: "", lang: "", tontines: [] };
+}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(e){} }
+function lang(){
+  if (state.lang === "fr" || state.lang === "en") return state.lang;
+  var n = (navigator.language || "en").toLowerCase();
+  return n.indexOf("fr") === 0 ? "fr" : "en";
+}
+function t(k, v){
+  var s = (TR[lang()] && TR[lang()][k]) || TR.en[k] || k;
+  if (v) for (var p in v) s = s.split("{" + p + "}").join(v[p]);
+  return s;
+}
+function toggleLang(){ state.lang = lang() === "fr" ? "en" : "fr"; save(); render(); }
+
+function uid(){ return Math.random().toString(36).slice(2,9); }
+function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+function find(id){ return state.tontines.filter(function(x){ return x.id === id; })[0]; }
+function shuffle(a){ a = a.slice(); for (var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var x=a[i];a[i]=a[j];a[j]=x; } return a; }
+function fmt(n){ var s = (Math.round(n*100)/100).toString(); return lang() === "fr" ? s.replace(".", ",") : s; }
+function freqLabel(f){ return f === "semaine" ? t("freqWeek") : t("freqMonth"); }
+function nowStr(){ return new Date().toLocaleDateString(lang() === "fr" ? "fr-FR" : "en-GB"); }
+
+// ====== Pi SDK ======
+var piReady = false;
+try { if (window.Pi) { Pi.init({ version: "2.0", sandbox: true }); piReady = true; } } catch(e){}
+
+function piLogin(){
+  if (!piReady) { alert(t("piMissing")); return; }
+  Pi.authenticate(["username","payments"], function(){}).then(function(auth){
+    state.user = auth.user.username; save(); render();
+  }).catch(function(){ alert(t("piFail")); });
+}
+function demoLogin(){
+  var v = document.getElementById("pseudo").value.trim();
+  if (!v) return;
+  state.user = v; save(); render();
+}
+function logout(){ state.user = ""; save(); render(); }
+
+// ====== Payment ======
+function payPi(id, idx){
+  var tn = find(id); if (!tn) return;
+  var name = tn.members[idx];
+  var done = function(){ markPaid(tn, name); render(); };
+  if (PI_PAYMENTS_LIVE && piReady) {
+    Pi.createPayment({
+      amount: tn.amount,
+      memo: "Contribution " + tn.name + " - round " + (tn.round+1),
+      metadata: { tontineId: tn.id, round: tn.round, member: name }
+    }, {
+      onReadyForServerApproval: function(paymentId){ /* TODO: call your server /approve */ },
+      onReadyForServerCompletion: function(paymentId, txid){ /* TODO: call your server /complete */ done(); },
+      onCancel: function(){},
+      onError: function(){ alert(t("errPay")); }
+    });
+  } else {
+    if (confirm(t("confirmPay", { x: name, a: fmt(tn.amount) }))) done();
+  }
+}
+function markPaid(tn, name){
+  tn.paid[tn.round] = tn.paid[tn.round] || {};
+  tn.paid[tn.round][name] = nowStr();
+  save();
+}
+
+// ====== Actions ======
+var view = { page: "home", id: null };
+function go(page, id){ view = { page: page, id: id || null }; render(); window.scrollTo(0,0); }
+
+function createTontine(){
+  var name = document.getElementById("tn").value.trim();
+  var amount = parseFloat(String(document.getElementById("ta").value).replace(",", "."));
+  var freq = document.getElementById("tf").value;
+  if (!name || !(amount > 0)) { alert(t("errNameAmount")); return; }
+  var tn = { id: uid(), name: name, amount: amount, freq: freq, owner: state.user,
+            members: [state.user], order: [], started: false, round: 0, paid: {}, history: [] };
+  state.tontines.push(tn); save(); go("detail", tn.id);
+}
+function addMember(id){
+  var tn = find(id); var inp = document.getElementById("nm");
+  var n = inp.value.trim();
+  if (!n) return;
+  if (tn.members.indexOf(n) >= 0) { alert(t("errDup")); return; }
+  if (tn.members.length >= 12) { alert(t("err12")); return; }
+  tn.members.push(n); save(); render();
+}
+function removeMember(id, idx){
+  var tn = find(id);
+  tn.members.splice(idx, 1);
+  save(); render();
+}
+function startTontine(id){
+  var tn = find(id);
+  if (tn.members.length < 2) { alert(t("errMin2")); return; }
+  if (!confirm(t("confirmStart"))) return;
+  tn.order = shuffle(tn.members); tn.started = true; tn.round = 0; tn.paid = {}; tn.history = [];
+  save(); render();
+}
+function payout(id){
+  var tn = find(id);
+  var ben = tn.order[tn.round];
+  tn.history.push({ round: tn.round + 1, who: ben, amount: tn.amount * tn.members.length, date: nowStr() });
+  tn.round += 1; save(); render();
+}
+function deleteTontine(id){
+  if (!confirm(t("confirmDel"))) return;
+  state.tontines = state.tontines.filter(function(x){ return x.id !== id; });
+  save(); go("home");
+}
+function share(id){
+  var tn = find(id);
+  var txt = t("shareText", { n: tn.name, a: fmt(tn.amount), f: freqLabel(tn.freq), m: tn.members.length });
+  if (navigator.share) { navigator.share({ text: txt }).catch(function(){}); }
+  else if (navigator.clipboard) { navigator.clipboard.writeText(txt).then(function(){ alert(t("copied")); }); }
+  else { prompt(t("copyPrompt"), txt); }
+}
+
+// ====== Views ======
+function render(){
+  var app = document.getElementById("app");
+  document.documentElement.lang = lang();
+  document.getElementById("tag").textContent = t("tagline");
+  document.getElementById("langbtn").textContent = lang() === "fr" ? "EN" : "FR";
+  document.getElementById("privlink").textContent = t("privacy");
+  document.getElementById("who").innerHTML = state.user ? esc(state.user) + ' · <a href="#" onclick="logout();return false">' + t("quit") + '</a>' : "";
+  if (!state.user) { app.innerHTML = vLogin(); return; }
+  if (view.page === "new") app.innerHTML = vNew();
+  else if (view.page === "detail" && find(view.id)) app.innerHTML = vDetail(find(view.id));
+  else { view = { page: "home", id: null }; app.innerHTML = vHome(); }
+}
+
+function vLogin(){
+  return '<div class="card"><h2>' + t("welcome") + '</h2>' +
+    '<p class="muted">' + t("welcomeText") + '</p>' +
+    '<button onclick="piLogin()" style="width:100%">' + t("loginPi") + '</button>' +
+    '<h3>' + t("demoMode") + '</h3><label>' + t("yourNick") + '</label>' +
+    '<input id="pseudo" placeholder="' + esc(t("nickPh")) + '" maxlength="30">' +
+    '<div style="height:10px"></div><button class="sec" onclick="demoLogin()" style="width:100%">' + t("continueDemo") + '</button></div>';
+}
+
+function vHome(){
+  var h = '<div class="between" style="margin-bottom:12px"><h2 style="margin:0">' + t("myTontines") + '</h2><button onclick="go(\'new\')">' + t("newBtn") + '</button></div>';
+  if (!PI_PAYMENTS_LIVE) h += '<div class="notice">' + t("demoNotice") + '</div>';
+  if (!state.tontines.length) return h + '<div class="card empty">' + t("noTontine") + '</div>';
+  state.tontines.forEach(function(tn){
+    var st = tn.started ? (tn.round >= tn.order.length ? t("finished") : t("roundOf", { n: tn.round+1, m: tn.order.length })) : t("setup");
+    h += '<div class="card" onclick="go(\'detail\',\'' + tn.id + '\')" style="cursor:pointer"><div class="between"><b>' + esc(tn.name) + '</b><span class="pill cur">' + st + '</span></div>' +
+         '<div class="muted">' + t("summary", { a: fmt(tn.amount), f: freqLabel(tn.freq), n: tn.members.length }) + '</div></div>';
+  });
+  return h;
+}
+
+function vNew(){
+  return '<button class="back" onclick="go(\'home\')">' + t("back") + '</button><div class="card"><h2>' + t("newTitle") + '</h2>' +
+    '<label>' + t("groupName") + '</label><input id="tn" placeholder="' + esc(t("groupPh")) + '" maxlength="40">' +
+    '<label>' + t("amountLbl") + '</label><input id="ta" type="number" inputmode="decimal" min="0" step="any" placeholder="' + esc(t("amountPh")) + '">' +
+    '<label>' + t("frequency") + '</label><select id="tf"><option value="semaine">' + t("optWeek") + '</option><option value="mois">' + t("optMonth") + '</option></select>' +
+    '<div style="height:14px"></div><button onclick="createTontine()" style="width:100%">' + t("create") + '</button></div>';
+}
+
+function vDetail(tn){
+  var h = '<button class="back" onclick="go(\'home\')">' + t("back") + '</button>';
+  h += '<div class="card"><h2 style="margin:0">' + esc(tn.name) + '</h2>' +
+       '<div class="muted">' + t("potLine", { a: fmt(tn.amount), f: freqLabel(tn.freq) }) + '<b>' + fmt(tn.amount * tn.members.length) + ' π</b></div>' +
+       '<div style="height:10px"></div><button class="sec small" onclick="share(\'' + tn.id + '\')">' + t("share") + '</button></div>';
+
+  if (!tn.started) {
+    h += '<div class="card"><h2>' + t("members", { n: tn.members.length }) + '</h2>';
+    tn.members.forEach(function(m, i){
+      h += '<div class="item between"><span>' + esc(m) + (m === tn.owner ? ' <span class="muted">' + t("organizer") + '</span>' : '') + '</span>' +
+           (m !== tn.owner && state.user === tn.owner ? '<button class="sec small" onclick="removeMember(\'' + tn.id + '\',' + i + ')">' + t("remove") + '</button>' : '') + '</div>';
+    });
+    if (state.user === tn.owner) {
+      h += '<label>' + t("addMember") + '</label><div class="row"><input id="nm" placeholder="' + esc(t("userPh")) + '" maxlength="30"><button onclick="addMember(\'' + tn.id + '\')">' + t("add") + '</button></div>' +
+           '<div style="height:14px"></div><button class="gold" style="width:100%" onclick="startTontine(\'' + tn.id + '\')">' + t("startDraw") + '</button>';
+    } else h += '<p class="muted">' + t("onlyOwnerStart") + '</p>';
+    h += '</div>';
+  } else {
+    var finished = tn.round >= tn.order.length;
+    if (finished) {
+      h += '<div class="card"><h2>' + t("finishedTitle") + '</h2><p class="muted">' + t("finishedText") + '</p></div>';
+    } else {
+      var ben = tn.order[tn.round]; var paid = tn.paid[tn.round] || {};
+      var count = tn.members.filter(function(m){ return paid[m]; }).length;
+      var pct = Math.round(count / tn.members.length * 100);
+      h += '<div class="card"><div class="muted">' + t("roundNofM", { n: tn.round+1, m: tn.order.length }) + '</div>' +
+           '<h2>' + t("recipient", { x: esc(ben) }) + '</h2>' +
+           '<div class="bar"><div style="width:' + pct + '%"></div></div><div class="muted">' + t("received", { c: count, m: tn.members.length }) + '</div><div style="height:6px"></div>';
+      tn.members.forEach(function(m, i){
+        var ok = paid[m];
+        h += '<div class="item between"><span>' + esc(m) + '</span><span>' +
+             (ok ? '<span class="pill ok">' + t("paid", { d: esc(ok) }) + '</span>' :
+               '<span class="pill bad">' + t("pending") + '</span> <button class="small" onclick="payPi(\'' + tn.id + '\',' + i + ')">' + t("contribute") + '</button>') + '</span></div>';
+      });
+      h += '<div style="height:14px"></div><button class="gold" style="width:100%"' + (count < tn.members.length || state.user !== tn.owner ? ' disabled' : '') +
+           ' onclick="payout(\'' + tn.id + '\')">' + t("payoutBtn", { a: fmt(tn.amount * tn.members.length), x: esc(ben) }) + '</button>';
+      if (state.user !== tn.owner) h += '<p class="muted">' + t("ownerValidates") + '</p>';
+      h += '</div>';
+    }
+    h += '<div class="card"><h2>' + t("orderTitle") + '</h2>';
+    tn.order.forEach(function(m, i){
+      h += '<div class="item between"><span>' + (i+1) + '. ' + esc(m) + '</span>' +
+           (i === tn.round && !finished ? '<span class="pill cur">' + t("currentRound") + '</span>' : (i < tn.round ? '<span class="pill ok">' + t("got") + '</span>' : '')) + '</div>';
+    });
+    h += '</div>';
+    h += '<div class="card"><h2>' + t("history") + '</h2>';
+    if (!tn.history.length) h += '<p class="muted">' + t("noHistory") + '</p>';
+    tn.history.slice().reverse().forEach(function(x){
+      h += '<div class="item">' + t("histLine", { n: x.round, x: esc(x.who), a: fmt(x.amount) }) + ' <span class="muted">(' + esc(x.date) + ')</span></div>';
+    });
+    h += '</div>';
+  }
+  if (state.user === tn.owner) h += '<button class="sec" style="width:100%" onclick="deleteTontine(\'' + tn.id + '\')">' + t("del") + '</button>';
+  return h;
+}
+
+render();
+</script>
+</body>
+</html>
